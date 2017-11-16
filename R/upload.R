@@ -180,7 +180,8 @@ gcs_upload <- function(file,
                                                       predefinedAcl=predefinedAcl),
                                      customConfig = list(
                                        add_headers("X-Upload-Content-Type" = type),
-                                       add_headers("X-Upload-Content-Length" = file.size(temp))
+                                       add_headers("X-Upload-Content-Length" = file.size(temp),
+                                       httr::add_headers("Authorization"=token)
 
                                      ))
 
@@ -254,7 +255,8 @@ gcs_upload <- function(file,
                                          predefinedAcl=predefinedAcl),
                         customConfig = list(
                           encode = "multipart",
-                          httr::add_headers("Content-Type" =  "multipart/related")
+                          httr::add_headers("Content-Type" =  "multipart/related",
+                          httr::add_headers("Authorization"=token))
                         ))
 
     req <- up(path_arguments = list(b = bucket),
@@ -274,7 +276,8 @@ gcs_upload <- function(file,
                                          o = ""),
                         pars_args = list(uploadType="media",
                                          name=name,
-                                         predefinedAcl=predefinedAcl))
+                                         predefinedAcl=predefinedAcl),
+                        customConfig = list(httr::add_headers("Authorization"=token)))
 
     req <- up(path_arguments = list(b = bucket),
               pars_arguments = list(name = name),

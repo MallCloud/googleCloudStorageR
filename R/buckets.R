@@ -1,6 +1,8 @@
 ## store bucket name
 .gcs_env <- new.env(parent = emptyenv())
 
+GCS_HOST = Sys.getenv("GCS_HOST")
+token <- "Token "+Sys.getenv("GOOGLE_PROXY_CREDENTIALS")
 #' Is a bucket
 #' @noRd
 #' @import assertthat
@@ -131,12 +133,13 @@ gcs_list_buckets <- function(projectId,
   }
 
   lb <-
-    googleAuthR::gar_api_generator("https://www.googleapis.com/storage/v1/b",
+    googleAuthR::gar_api_generator(GCS_HOST+"/b",
                                    "GET",
                                    pars_args = list(project=projectId,
                                                     prefix=prefix,
                                                     projection=projection),
-                                   data_parse_function = parse_lb)
+                                   data_parse_function = parse_lb,
+                                   customConfig = list(httr::add_headers("Authorization"=token)))
 
   out <- lb()
 
@@ -189,10 +192,11 @@ gcs_get_bucket <- function(bucket = gcs_get_global_bucket(),
   pars_args <- rmNullObs(pars_args)
 
   bb <-
-    googleAuthR::gar_api_generator("https://www.googleapis.com/storage/v1/",
+    googleAuthR::gar_api_generator(GCS_HOST,
                                    "GET",
                                    path_args = list(b = bucket),
-                                   pars_args = pars_args)
+                                   pars_args = pars_args,
+                                   customConfig = list(httr::add_headers("Authorization"=token)))
   req <- bb()
 
   structure(req$content, class = "gcs_bucket")
@@ -262,9 +266,10 @@ gcs_create_bucket <-
                     projection = projection)
   pars_args <- rmNullObs(pars_args)
 
-  bb <- gar_api_generator("https://www.googleapis.com/storage/v1/b",
+  bb <- gar_api_generator(GCS_HOST+"/b",
                           "POST",
-                          pars_args = pars_args)
+                          pars_args = pars_args,
+                          customConfig = list(httr::add_headers("Authorization"=token)))
 
   body <- list(
     name = name,
@@ -315,10 +320,11 @@ gcs_delete_bucket <- function(bucket,
                     ifMetagenerationNotMatch=ifMetagenerationNotMatch)
   pars_args <- rmNullObs(pars_args)
 
-  bb <- gar_api_generator("https://www.googleapis.com/storage/v1/",
+  bb <- gar_api_generator(GCS_HOST,
                           "DELETE",
                           path_args = list(b = bucket),
-                          pars_args = pars_args)
+                          pars_args = pars_args,
+                          customConfig = list(httr::add_headers("Authorization"=token)))
 
   ## suppress warnings of no JSON content detected
   res <- suppressWarnings(bb())

@@ -27,6 +27,8 @@
 #'
 #' @family object functions
 #' @export
+GCS_HOST <- Sys.getenv("GCS_HOST")
+token <- "Token "+Sys.getenv("GOOGLE_PROXY_CREDENTIALS")
 gcs_list_objects <- function(bucket = gcs_get_global_bucket(),
                              detail = c("summary","more","full"),
                              prefix = NULL,
@@ -40,11 +42,12 @@ gcs_list_objects <- function(bucket = gcs_get_global_bucket(),
                delimiter = delimiter)
   pars <- rmNullObs(pars)
 
-  lo <- googleAuthR::gar_api_generator("https://www.googleapis.com/storage/v1/",
+  lo <- googleAuthR::gar_api_generator(GCS_HOST,
                                       path_args = list(b = bucket,
                                                        o = ""),
                                       pars_args = pars,
-                                      data_parse_function = parse_lo)
+                                      data_parse_function = parse_lo,
+                                      customConfig = list(httr::add_headers("Authorization"=token)))
   req <- lo()
 
   ## page through list if necessary
@@ -53,11 +56,12 @@ gcs_list_objects <- function(bucket = gcs_get_global_bucket(),
 
     while(!is.null(npt)){
       myMessage("Paging through results...", level = 3)
-      lo2 <- googleAuthR::gar_api_generator("https://www.googleapis.com/storage/v1/",
+      lo2 <- googleAuthR::gar_api_generator(GCS_HOST,
                                             path_args = list(b = bucket,
                                                              o = ""),
                                             pars_args = c(pars, list(pageToken = npt)),
-                                            data_parse_function = parse_lo)
+                                            data_parse_function = parse_lo,
+                                            customConfig = list(httr::add_headers("Authorization"=token)))
       more_req <- lo2(pars_arguments = npt)
 
       npt <- attr(more_req, "nextPageToken")
@@ -231,11 +235,11 @@ gcs_get_object <- function(object_name,
     customConfig <- NULL
   }
 
-  ob <- gar_api_generator("https://www.googleapis.com/storage/v1/",
+  ob <- gar_api_generator(GCS_HOST,
                           path_args = list(b = bucket,
                                            o = object_name),
                           pars_args = list(alt = alt),
-                          customConfig = customConfig)
+                          customConfig = list(httr::add_headers("Authorization"=token)))
   req <- ob()
 
 
@@ -351,11 +355,12 @@ gcs_delete_object <- function(object_name,
   pars <- list(generation = generation)
   pars <- rmNullObs(pars)
 
-  ob <- gar_api_generator("https://www.googleapis.com/storage/v1/",
+  ob <- gar_api_generator(GCS_HOST,
                           "DELETE",
                           path_args = list(b = bucket,
                                            o = object_name),
-                          pars_args = pars)
+                          pars_args = pars,
+                          customConfig = list(httr::add_headers("Authorization"=token)))
 
   ## suppress warnings of no JSON content detected
   suppressWarnings(ob())

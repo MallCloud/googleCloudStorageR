@@ -230,16 +230,16 @@ gcs_get_object <- function(object_name,
 
     assert_that(is.logical(overwrite))
 
-    customConfig <- list(write_disk(saveToDisk, overwrite = overwrite))
+    customConfig <- list(write_disk(saveToDisk, overwrite = overwrite),httr::add_headers("Authorization"=token))
   } else {
-    customConfig <- NULL
+    customConfig <- list(httr::add_headers("Authorization"=token))
   }
 
   ob <- gar_api_generator(GCS_HOST,
                           path_args = list(b = bucket,
                                            o = object_name),
                           pars_args = list(alt = alt),
-                          customConfig = list(httr::add_headers("Authorization"=token)))
+                          customConfig = customConfig)
   req <- ob()
 
 

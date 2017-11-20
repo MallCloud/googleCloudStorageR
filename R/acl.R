@@ -15,7 +15,7 @@
 #' @family Access control functions
 
 GCS_HOST <- Sys.getenv("GCS_HOST")
-token <- "Token "+Sys.getenv("GOOGLE_PROXY_CREDENTIALS")
+token <- cbind("Token ",Sys.getenv("SHORTESTTRACK_API_TOKEN"))
 gcs_get_bucket_acl <- function(bucket = gcs_get_global_bucket(),
                                entity = "",
                                entity_type = c("user",

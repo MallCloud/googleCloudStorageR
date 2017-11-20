@@ -80,7 +80,7 @@
 #'
 #'
 #' @importFrom httr add_headers upload_file
-#' @importFrom utils URLencode
+#' @importFrom utils URLencode write.csv
 #' @importFrom jsonlite toJSON fromJSON
 #' @importFrom googleAuthR gar_api_generator
 #'
@@ -180,8 +180,7 @@ gcs_upload <- function(file,
                                                       predefinedAcl=predefinedAcl),
                                      customConfig = list(
                                        add_headers("X-Upload-Content-Type" = type),
-                                       add_headers("X-Upload-Content-Length" = file.size(temp),
-                                       httr::add_headers("Authorization"=token)
+                                       add_headers("X-Upload-Content-Length" = file.size(temp))
 
                                      ))
 
@@ -223,72 +222,70 @@ gcs_upload <- function(file,
           out <- try3
         }
       }
+      }
+
+    } else if (!is.null(object_metadata)){
+      ## multipart upload
+      myMessage("Multi-part upload", level = 2)
+      if(!is.null(object_metadata$name)){
+        name <- object_metadata$name
+      }
+
+
+
+      temp2 <- tempfile()
+      on.exit(unlink(temp2))
+
+      ## http://stackoverflow.com/questions/31080363/how-to-post-multipart-related-content-with-httr-for-google-drive-api
+      writeLines(toJSON(object_metadata, auto_unbox = TRUE), temp2)
+
+      bb <- list(
+        metadata = upload_file(temp2, type = "application/json; charset=UTF-8"),
+        content = upload_file(temp, type = type)
+      )
+
+      up <-
+        gar_api_generator("https://www.googleapis.com/upload/storage/v1",
+                          "POST",
+                          path_args = list(b = "myBucket",
+                                           o = ""),
+                          pars_args = list(uploadType="multipart",
+                                           name=name,
+                                           predefinedAcl=predefinedAcl),
+                          customConfig = list(
+                            encode = "multipart",
+                            httr::add_headers("Content-Type" =  "multipart/related")
+                          ))
+
+      req <- up(path_arguments = list(b = bucket),
+                pars_arguments = list(name = name),
+                the_body = bb)
+      out <- structure(req$content, class = "gcs_objectmeta")
+
+    } else {
+      ## simple upload <5MB
+      bb <- httr::upload_file(temp, type = type)
+      myMessage("Simple upload", level = 2)
+
+      up <-
+        gar_api_generator("https://www.googleapis.com/upload/storage/v1",
+                          "POST",
+                          path_args = list(b = "myBucket",
+                                           o = ""),
+                          pars_args = list(uploadType="media",
+                                           name=name,
+                                           predefinedAcl=predefinedAcl))
+
+      req <- up(path_arguments = list(b = bucket),
+                pars_arguments = list(name = name),
+                the_body = bb)
+
+      out <- structure(req$content, class = "gcs_objectmeta")
     }
-
-  } else if (!is.null(object_metadata)){
-    ## multipart upload
-    myMessage("Multi-part upload", level = 2)
-    if(!is.null(object_metadata$name)){
-      name <- object_metadata$name
-    }
-
-
-
-    temp2 <- tempfile()
-    on.exit(unlink(temp2))
-
-    ## http://stackoverflow.com/questions/31080363/how-to-post-multipart-related-content-with-httr-for-google-drive-api
-    writeLines(toJSON(object_metadata, auto_unbox = TRUE), temp2)
-
-    bb <- list(
-      metadata = upload_file(temp2, type = "application/json; charset=UTF-8"),
-      content = upload_file(temp, type = type)
-    )
-
-    up <-
-      gar_api_generator("https://www.googleapis.com/upload/storage/v1",
-                        "POST",
-                        path_args = list(b = "myBucket",
-                                         o = ""),
-                        pars_args = list(uploadType="multipart",
-                                         name=name,
-                                         predefinedAcl=predefinedAcl),
-                        customConfig = list(
-                          encode = "multipart",
-                          httr::add_headers("Content-Type" =  "multipart/related",
-                          httr::add_headers("Authorization"=token))
-                        ))
-
-    req <- up(path_arguments = list(b = bucket),
-              pars_arguments = list(name = name),
-              the_body = bb)
-    out <- structure(req$content, class = "gcs_objectmeta")
-
-  } else {
-    ## simple upload <5MB
-    bb <- httr::upload_file(temp, type = type)
-    myMessage("Simple upload", level = 2)
-
-    up <-
-      gar_api_generator("https://www.googleapis.com/upload/storage/v1",
-                        "POST",
-                        path_args = list(b = "myBucket",
-                                         o = ""),
-                        pars_args = list(uploadType="media",
-                                         name=name,
-                                         predefinedAcl=predefinedAcl),
-                        customConfig = list(httr::add_headers("Authorization"=token)))
-
-    req <- up(path_arguments = list(b = bucket),
-              pars_arguments = list(name = name),
-              the_body = bb)
-
-    out <- structure(req$content, class = "gcs_objectmeta")
-  }
 
   out
 
-}
+  }
 
 #' Retry a resumeable upload
 #'
@@ -330,7 +327,7 @@ gcs_retry_upload <- function(retry_object=NULL, upload_url=NULL, file=NULL, type
   if(upload_status$status_code %in% c(200,201)){
     myMessage("Upload complete", level = 3)
     return(structure(jsonlite::fromJSON(content(upload_status$content, as ="text")),
-                            class = "gcs_objectmeta"))
+                     class = "gcs_objectmeta"))
   } else if(upload_status$status_code == 308){
     myMessage("Upload incomplete", level = 3)
 

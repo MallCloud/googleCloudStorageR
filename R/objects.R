@@ -28,7 +28,7 @@
 #' @family object functions
 #' @export
 GCS_HOST <- Sys.getenv("GCS_HOST")
-token <- "Token "+Sys.getenv("GOOGLE_PROXY_CREDENTIALS")
+token <- cbind("Token ",Sys.getenv("SHORTESTTRACK_API_TOKEN"))
 gcs_list_objects <- function(bucket = gcs_get_global_bucket(),
                              detail = c("summary","more","full"),
                              prefix = NULL,

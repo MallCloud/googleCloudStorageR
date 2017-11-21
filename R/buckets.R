@@ -1,7 +1,7 @@
 ## store bucket name
 .gcs_env <- new.env(parent = emptyenv())
 
-GCS_HOST = Sys.getenv("GCS_HOST")
+GCS_HOST <- Sys.getenv("GCS_HOST")
 token <- cbind("Token ",Sys.getenv("SHORTESTTRACK_API_TOKEN"))
 #' Is a bucket
 #' @noRd
@@ -177,29 +177,33 @@ gcs_list_buckets <- function(projectId,
 #' @family bucket functions
 #' @import assertthat
 #' @export
-gcs_get_bucket <- function(bucket = gcs_get_global_bucket(),
-                           ifMetagenerationMatch = NULL,
+gcs_get_bucket <- function(ifMetagenerationMatch = NULL,
                            ifMetagenerationNotMatch = NULL,
                            projection = c("noAcl","full")){
 
   projection <- match.arg(projection)
 
-  bucket <- as.bucket_name(bucket)
+  #bucket <- as.bucket_name(bucket)
 
   pars_args <- list(ifMetagenerationMatch=ifMetagenerationMatch,
                     ifMetagenerationNotMatch=ifMetagenerationNotMatch,
                     projection=projection)
   pars_args <- rmNullObs(pars_args)
-
-  bb <-
-    googleAuthR::gar_api_generator(GCS_HOST,
-                                   "GET",
-                                   path_args = list(b = bucket),
-                                   pars_args = pars_args,
-                                   customConfig = list(httr::add_headers("Authorization"=token)))
-  req <- bb()
-
-  structure(req$content, class = "gcs_bucket")
+  
+  
+  bb <- httr::GET(GCS_HOST,add_headers('Authorization'='Token 9651bd3dbbea1d49b3538cf4c0551c388b8ee76e'))
+    
+  content(bb,'text')
+  # 
+  # bb <-
+  #   googleAuthR::gar_api_generator(GCS_HOST,
+  #                                  "GET",
+  #                                  path_args = list(b = bucket),
+  #                                  pars_args = pars_args,
+  #                                  customConfig = list(httr::add_headers("Authorization"=token)))
+  # req <- bb()
+  # 
+  # structure(req$content, class = "gcs_bucket")
 }
 
 #' Create a new bucket

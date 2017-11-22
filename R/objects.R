@@ -29,7 +29,7 @@
 #' @export
 #' 
 #' 
-GCS_HOST <- Sys.getenv('GCS_HOST')
+GCS_HOST <- 'http://35.202.46.161:8001/cs/'
 
 token <- cbind("Token ",Sys.getenv("SHORTESTTRACK_API_TOKEN"))
 

@@ -1,0 +1,6 @@
+library(googleCloudStorageR)
+Sys.setenv('GCS_HOST'='http://35.202.46.161.8001/cs/')
+Sys.setenv('SHORTESTTRACK_API_TOKEN'='9651bd3dbbea1d49b3538cf4c0551c388b8ee76e')
+gcs_get_bucket()
+gcs_get_object('02.csv')
+gcs_get_object('02.csv',saveToDisk = '/home/akhil/02.csv')

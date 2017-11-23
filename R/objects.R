@@ -239,11 +239,15 @@ gcs_get_object <- function(object_name,
     customConfig <- NULL
   }
   a <- paste(GCS_HOST,object_name,sep = "")
+  print(a)
   
+  # lo <- httr::GET('http://35.202.46.161:8001/cs/03.csv?token=9651bd3dbbea1d49b3538cf4c0551c388b8ee76e&alt=media',write_disk(object_name,overwrite=TRUE))
   lo <- httr::GET(a,
-                  query= list('alt'='media'),
-                  add_headers("Authorization"=token))
-  bin <- content(lo,'raw')
+                  add_headers("Authorization"= 'Token 9651bd3dbbea1d49b3538cf4c0551c388b8ee76e'),
+                  query= list("alt"="media"),
+                  write_disk(object_name,overwrite=TRUE))
+  #head(readLines(object_name),5)
+  # str(content(lo)$headers)
   
   # ob <- gar_api_generator("https://www.googleapis.com/storage/v1/",
   #                         path_args = list(b = bucket,
@@ -260,12 +264,18 @@ gcs_get_object <- function(object_name,
   #   }
   # 
   if(!is.null(saveToDisk)){
-    
-    writeBin(bin,saveToDisk)
-    
+
+    lo <- httr::GET(a,
+                    add_headers("Authorization"= 'Token 9651bd3dbbea1d49b3538cf4c0551c388b8ee76e'),
+                    query= list("alt"="media"),
+                    write_disk(object_name,overwrite=TRUE))
+
   }
   else{
-    writeBin(bin,object_name)
+    lo <- httr::GET(a,
+                    add_headers("Authorization"= 'Token 9651bd3dbbea1d49b3538cf4c0551c388b8ee76e'),
+                    query= list("alt"="media"),
+                    write_disk(saveToDisk,overwrite=TRUE))
   }
   # else {
   #   message("Downloaded ", object_name)
@@ -286,7 +296,7 @@ gcs_get_object <- function(object_name,
   # }
   
   
-  TRUE
+  # TRUE
 }
 
 #' Make metadata for an object
